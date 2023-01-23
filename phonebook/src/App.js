@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import personService from './services/person'
+import ErrorNotification from './components/ErrorNotification'
+import SuccessNotification from './components/SuccessNotification'
 import DisplayNumbers from './components/DisplayNumbers'
 
 const App = () => {
@@ -9,6 +11,8 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [newSearch, setNewSearch] = useState('')
+  const [errornotification, setErrorNotification] = useState(null)
+  const [successnotification, setSuccessNotification] = useState(null)
 
   useEffect(() => {
     personService
@@ -31,8 +35,12 @@ const App = () => {
         .create(nameObject)
         .then(returnedPerson => {
           setPersons(persons.concat(returnedPerson))
+          setSuccessNotification(`Added ${newName}`)
           setNewName('')
           setNewNumber('')
+          setTimeout(() => {
+            setSuccessNotification(null)
+          }, 3000)
         })
       
     }
@@ -45,12 +53,20 @@ const App = () => {
           .then(returnedPerson => {
             setPersons(persons.map(person => person.id !== changedPerson.id ? person : returnedPerson))
           })
+          .catch(error => {
+            setErrorNotification(
+              `Information of '${findPerson.name} was already removed from server`
+            )
+            setTimeout(() => {
+              setErrorNotification(null)
+            }, 3000)
+          })
       }
     }
   }
 
   const deletePerson = (id) => {
-    if(window.confirm(`Are you sure you want to delete ${persons[id]}`)) {
+    if(window.confirm(`Are you sure you want to delete ${persons[id].name}`)) {
       personService
         .deletePerson(id)
         .then(() => {
@@ -76,6 +92,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <ErrorNotification message={errornotification} />
+      <SuccessNotification message={successnotification} />
       <Filter value={newSearch} onChange = {handleSearchChange}/>
       
       <h3>Add New</h3>
